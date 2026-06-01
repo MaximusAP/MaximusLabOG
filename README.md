@@ -1,8 +1,8 @@
-# MaximusLab — OG Edition
+# MaximusLab OG — Kubernetes Deployment
 
 > *"The adventure starts now. No map. No ceiling. No excuses."*
 
-Cinematic, full-bleed landing page for MaximusLab. Designed for home lab deployment on **Kubernetes** via **Docker + Nginx**.
+Production-ready deployment of the MaximusLab OG website on a home lab Kubernetes cluster, served via Nginx and exposed through an Ingress controller.
 
 ---
 
@@ -10,100 +10,142 @@ Cinematic, full-bleed landing page for MaximusLab. Designed for home lab deploym
 
 ```
 maximuslab-og/
-├── index.html           # Website (HTML + CSS + JS, zero dependencies)
-├── hero.jpeg            # Full-bleed hero image
-├── nginx.conf           # Nginx config (gzip, caching, health probe)
-├── Dockerfile           # FROM nginx:latest
-├── k8s-deployment.yaml  # Kubernetes Namespace + Deployment + Service + Ingress
-└── README.md            # This file
+├── index.html              # Website (HTML + CSS + JS)
+├── hero.jpeg               # Hero image
+├── nginx.conf              # Nginx config (gzip, caching, /healthz probe)
+├── Dockerfile              # FROM nginx:latest
+├── k8s-deployment.yaml     # Full Kubernetes manifests
+└── README.md               # This file
 ```
 
 ---
 
-## Quick Start — Docker
+## Cluster Resources
 
-```bash
-# 1. Build
-docker build -t maximuslab .
-
-# 2. Run
-docker run -d -p 80:80 --name maximuslab maximuslab
-
-# 3. Open
-open http://localhost
-```
+| Resource | Name | Namespace |
+|---|---|---|
+| Namespace | `maximuslabog` | — |
+| Deployment | `maximuslabog-web` | `maximuslabog` |
+| Service | `maximuslabog-web` | `maximuslabog` |
+| Ingress | `maximuslabog-web` | `maximuslabog` |
 
 ---
 
-## Kubernetes Deployment
+## Registry & Image
 
-### Step 1 — Build & push your image
+| Setting | Value |
+|---|---|
+| Registry | `192.168.2.128:8082` |
+| Image | `maximuslabog-web` |
+| Tag | `v1` |
+| Pull Policy | `Always` |
+| Full image ref | `192.168.2.128:8082/maximuslabog-web:v1` |
+
+---
+
+## Build & Push
 
 ```bash
-# Build
-docker build -t maximuslab:latest .
+# Build the image
+docker build -t maximuslabog-web:v1 .
 
-# Tag for your registry (e.g. local registry or Docker Hub)
-docker tag maximuslab:latest <your-registry>/maximuslab:latest
+# Tag for your local registry
+docker tag maximuslabog-web:v1 192.168.2.128:8082/maximuslabog-web:v1
 
-# Push
-docker push <your-registry>/maximuslab:latest
+# Push to registry
+docker push 192.168.2.128:8082/maximuslabog-web:v1
 ```
 
-> **Home lab tip:** If using a local registry (e.g. `registry.local:5000`):
-> ```bash
-> docker tag maximuslab:latest registry.local:5000/maximuslab:latest
-> docker push registry.local:5000/maximuslab:latest
+> **Note:** If your registry uses HTTP (not HTTPS), add it to Docker's insecure registries.
+>
+> On Linux — edit `/etc/docker/daemon.json`:
+> ```json
+> {
+>   "insecure-registries": ["192.168.2.128:8082"]
+> }
 > ```
+> Then restart Docker: `sudo systemctl restart docker`
+>
+> On each Kubernetes **worker node**, also configure containerd to allow the insecure registry by editing `/etc/containerd/config.toml` and restarting containerd.
 
-### Step 2 — Update the image reference
+---
 
-Edit `k8s-deployment.yaml` and update:
-```yaml
-image: maximuslab:latest   # → your-registry/maximuslab:latest
-```
-
-Set `imagePullPolicy: Always` if pulling from a remote registry.
-
-### Step 3 — Apply the manifests
+## Deploy to Kubernetes
 
 ```bash
+# Apply all manifests
 kubectl apply -f k8s-deployment.yaml
+
+# Verify namespace
+kubectl get ns maximuslabog
+
+# Watch pods come up
+kubectl get pods -n maximuslabog -w
+
+# Check service and ingress
+kubectl get svc,ingress -n maximuslabog
 ```
 
-This creates:
-- **Namespace:** `maximuslab`
-- **Deployment:** 2 replicas, rolling update strategy
-- **Service:** ClusterIP on port 80
-- **Ingress:** Routes `maximuslab.local` → Service
+---
 
-### Step 4 — Access the site
+## DNS / Hosts Configuration
 
-**Option A — Ingress (recommended)**
+The Ingress is configured for host: **`maximuslabog.lab.local`**
 
-Add to your `/etc/hosts` (or configure DNS):
+Add this entry to `/etc/hosts` on any machine that needs to access the site (or configure it in your local DNS / Pi-hole / pfSense):
+
 ```
-<ingress-controller-IP>   maximuslab.local
+<ingress-controller-IP>   maximuslabog.lab.local
 ```
-Then open: `http://maximuslab.local`
 
-**Option B — Port forward (quick test)**
+To find your ingress controller's external IP:
 ```bash
-kubectl port-forward -n maximuslab svc/maximuslab-web 8080:80
-open http://localhost:8080
+kubectl get svc -n ingress-nginx
+# Look for the EXTERNAL-IP of the ingress-nginx-controller service
 ```
 
-**Option C — NodePort**
+Then open: **`http://maximuslabog.lab.local`**
 
-In `k8s-deployment.yaml`, change the Service type:
+---
+
+## Quick Test (No DNS Required)
+
+```bash
+kubectl port-forward -n maximuslabog svc/maximuslabog-web 8080:80
+```
+Then open: `http://localhost:8080`
+
+---
+
+## Resource Limits
+
+| | CPU | Memory |
+|---|---|---|
+| Request | `50m` | `64Mi` |
+| Limit | `200m` | `128Mi` |
+
+---
+
+## Health Probes
+
+| Probe | Path | Port | Initial Delay | Period |
+|---|---|---|---|---|
+| Liveness | `/healthz` | `80` | `10s` | `30s` |
+| Readiness | `/healthz` | `80` | `5s` | `10s` |
+
+The `/healthz` endpoint is handled by Nginx and returns `200 OK`.
+
+---
+
+## Rollout Strategy
+
 ```yaml
-spec:
-  type: NodePort
-  ports:
-    - port: 80
-      targetPort: 80
-      nodePort: 30080   # Access via <NodeIP>:30080
+type: RollingUpdate
+maxSurge: 1
+maxUnavailable: 0
 ```
+
+Zero downtime deploys — new pods are created before old ones are removed.
 
 ---
 
@@ -111,68 +153,55 @@ spec:
 
 | Action | Command |
 |---|---|
-| Apply all manifests | `kubectl apply -f k8s-deployment.yaml` |
-| Check pods | `kubectl get pods -n maximuslab` |
-| Check service | `kubectl get svc -n maximuslab` |
-| Check ingress | `kubectl get ingress -n maximuslab` |
-| View pod logs | `kubectl logs -n maximuslab deploy/maximuslab-web` |
-| Restart deployment | `kubectl rollout restart -n maximuslab deploy/maximuslab-web` |
-| Scale replicas | `kubectl scale deploy maximuslab-web -n maximuslab --replicas=3` |
-| Delete all resources | `kubectl delete namespace maximuslab` |
+| Apply manifests | `kubectl apply -f k8s-deployment.yaml` |
+| Get pods | `kubectl get pods -n maximuslabog` |
+| Get all resources | `kubectl get all -n maximuslabog` |
+| View pod logs | `kubectl logs -n maximuslabog deploy/maximuslabog-web` |
+| Describe deployment | `kubectl describe deploy maximuslabog-web -n maximuslabog` |
+| Restart (re-pull image) | `kubectl rollout restart deploy/maximuslabog-web -n maximuslabog` |
+| Watch rollout | `kubectl rollout status deploy/maximuslabog-web -n maximuslabog` |
+| Scale replicas | `kubectl scale deploy maximuslabog-web -n maximuslabog --replicas=3` |
+| Delete everything | `kubectl delete namespace maximuslabog` |
 
 ---
 
-## Nginx Features
+## Updating to a New Version
 
-- **Gzip** compression (HTML, CSS, JS, SVG)
-- **Cache-Control** headers — images cached 365d, CSS/JS 30d
-- **Security headers** — X-Frame-Options, X-Content-Type-Options, XSS-Protection
-- **`/healthz` endpoint** — returns `200 OK` for Kubernetes liveness/readiness probes
-- **SPA routing** — `try_files` fallback to `index.html`
+```bash
+# 1. Build and push new image with new tag
+docker build -t maximuslabog-web:v2 .
+docker tag maximuslabog-web:v2 192.168.2.128:8082/maximuslabog-web:v2
+docker push 192.168.2.128:8082/maximuslabog-web:v2
+
+# 2. Update the image in your deployment
+kubectl set image deploy/maximuslabog-web \
+  maximuslabog-web=192.168.2.128:8082/maximuslabog-web:v2 \
+  -n maximuslabog
+
+# 3. Watch the rolling update
+kubectl rollout status deploy/maximuslabog-web -n maximuslabog
+```
 
 ---
 
 ## TLS / HTTPS (Optional)
 
-If using [cert-manager](https://cert-manager.io/) with Let's Encrypt, uncomment these lines in `k8s-deployment.yaml`:
+To enable HTTPS with cert-manager, add annotations and a TLS block to the Ingress:
 
 ```yaml
-annotations:
-  cert-manager.io/cluster-issuer: "letsencrypt-prod"
-...
-tls:
-  - hosts:
-      - maximuslab.local
-    secretName: maximuslab-tls
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+    - hosts:
+        - maximuslabog.lab.local
+      secretName: maximuslabog-tls
+  rules:
+    - host: maximuslabog.lab.local
+      ...
 ```
 
 ---
 
-## Customization
-
-| What | Where |
-|---|---|
-| Main headline / tagline | `index.html` → `.hero__brand`, `.hero__tagline` |
-| Ticker messages | `index.html` → `.ticker__item` elements |
-| Colors | `index.html` → `:root` CSS variables |
-| Nav links | `index.html` → `.nav__right` and `.mobile-menu` |
-| Replicas | `k8s-deployment.yaml` → `spec.replicas` |
-| Domain | `k8s-deployment.yaml` → `spec.rules[0].host` |
-
----
-
-## Site Features
-
-- Full-bleed cinematic layout — desktop split, mobile full-bleed overlay
-- Custom animated cursor with magnetic ring (desktop only)
-- Film-grain noise overlay + scanline effect
-- Cinematic loader sequence on page load
-- Staggered reveal animations (CSS keyframes)
-- Scrolling ticker bar with OG manifesto phrases
-- Mobile hamburger menu with full-screen overlay
-- Bebas Neue + Barlow Condensed typography
-- Zero JavaScript dependencies
-
----
-
-© 2025 MaximusLab. Built for the home lab. Deployed for the mission.
+© 2025 MaximusLab. Home lab. Real stakes. OG time.
