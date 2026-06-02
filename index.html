@@ -539,6 +539,213 @@
       .cursor, .cursor-ring { display: none; }
       body { cursor: auto; }
     }
+
+    /* ── PIPELINE SECTION ── */
+    .pipeline {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      background: var(--mid);
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding: clamp(4rem, 8vw, 7rem) clamp(1.5rem, 6vw, 5rem);
+      padding-bottom: clamp(5rem, 10vw, 8rem);
+    }
+
+    .pipeline__inner {
+      max-width: 1300px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(3rem, 6vw, 7rem);
+      align-items: center;
+    }
+
+    /* Left — image */
+    .pipeline__img-wrap {
+      position: relative;
+    }
+    .pipeline__img-wrap::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      background: linear-gradient(135deg, var(--accent), transparent 60%, rgba(232,200,74,0.2));
+      z-index: 0;
+      border-radius: 2px;
+    }
+    .pipeline__img-wrap::after {
+      content: '';
+      position: absolute;
+      bottom: -24px;
+      left: 15%;
+      right: 15%;
+      height: 50px;
+      background: radial-gradient(ellipse, rgba(232,200,74,0.18) 0%, transparent 70%);
+      filter: blur(12px);
+      z-index: -1;
+    }
+    .pipeline__img {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      display: block;
+      border-radius: 2px;
+      object-fit: cover;
+      aspect-ratio: 16/10;
+      filter: contrast(1.05) saturate(0.85) sepia(0.1);
+    }
+    .pipeline__img-tag {
+      position: absolute;
+      bottom: 1rem;
+      left: 1rem;
+      z-index: 2;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(8,8,8,0.82);
+      padding: 0.35em 0.9em;
+      border-left: 2px solid var(--accent);
+    }
+
+    /* Right — flow */
+    .pipeline__content {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(1.5rem, 3vw, 2.5rem);
+    }
+
+    .pipeline__eyebrow {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    .pipeline__eyebrow::before {
+      content: '';
+      width: 24px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    .pipeline__title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.2rem, 5vw, 4rem);
+      line-height: 0.95;
+      letter-spacing: 0.04em;
+      color: var(--white);
+    }
+    .pipeline__title em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .pipeline__desc {
+      font-size: clamp(0.85rem, 1.3vw, 0.95rem);
+      line-height: 1.85;
+      color: var(--off);
+      max-width: 42ch;
+    }
+
+    /* ── FLOW STEPS ── */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .flow__step {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 0 1rem;
+      position: relative;
+    }
+
+    /* Vertical connector line */
+    .flow__step:not(:last-child) .flow__icon::after {
+      content: '';
+      position: absolute;
+      left: 21px;
+      top: 44px;
+      bottom: -8px;
+      width: 2px;
+      background: linear-gradient(to bottom, rgba(232,200,74,0.4), rgba(232,200,74,0.05));
+    }
+
+    .flow__icon {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+      background: rgba(232,200,74,0.08);
+      border: 1px solid rgba(232,200,74,0.25);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      transition: background 0.3s, border-color 0.3s;
+      margin-bottom: 28px;
+    }
+    .flow__step:hover .flow__icon {
+      background: rgba(232,200,74,0.15);
+      border-color: var(--accent);
+    }
+
+    .flow__body {
+      padding-top: 0.15rem;
+      padding-bottom: 1.5rem;
+    }
+    .flow__label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.2rem;
+      opacity: 0.75;
+    }
+    .flow__name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+    }
+    .flow__detail {
+      font-size: 0.8rem;
+      color: var(--off);
+      line-height: 1.6;
+    }
+    .flow__tag {
+      display: inline-block;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.58rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--dark);
+      background: var(--accent);
+      padding: 0.18em 0.6em;
+      margin-top: 0.4rem;
+      font-weight: 700;
+    }
+    .flow__tag.green { background: #27ae60; color: #fff; }
+    .flow__tag.blue  { background: #2980b9; color: #fff; }
+    .flow__tag.red   { background: #c0392b; color: #fff; }
+
+    /* ── PIPELINE RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .pipeline__inner {
+        grid-template-columns: 1fr;
+      }
+      .pipeline__img { aspect-ratio: 16/9; }
+      .pipeline__desc { max-width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -631,6 +838,100 @@
 
   <!-- Vertical side label -->
   <span class="side-label">MaximusLab Home Lab &nbsp;·&nbsp; Kubernetes Cluster</span>
+
+  <!-- ── PIPELINE SECTION ── -->
+  <section class="pipeline" id="pipeline">
+    <div class="pipeline__inner">
+
+      <!-- Image -->
+      <div class="pipeline__img-wrap">
+        <img
+          class="pipeline__img"
+          src="pipeline.jpeg"
+          alt="MaximusLab — chilling while the pipeline runs"
+          loading="lazy"
+        />
+        <span class="pipeline__img-tag">Pipeline Running ✦ All Systems Go</span>
+      </div>
+
+      <!-- Flow -->
+      <div class="pipeline__content">
+
+        <p class="pipeline__eyebrow">CI/CD &nbsp;·&nbsp; Automation</p>
+
+        <h2 class="pipeline__title">Jenkins<br /><em>Webhook Flow</em></h2>
+
+        <p class="pipeline__desc">
+          Code ships itself. While the OG reads, the pipeline runs —
+          commit to deploy, fully automated, zero drama.
+        </p>
+
+        <div class="flow">
+
+          <div class="flow__step">
+            <div class="flow__icon">⬆</div>
+            <div class="flow__body">
+              <p class="flow__label">Step 01</p>
+              <p class="flow__name">Git Push</p>
+              <p class="flow__detail">Developer pushes to the feature branch. GitHub receives the commit and fires a webhook immediately.</p>
+              <span class="flow__tag">github.com</span>
+            </div>
+          </div>
+
+          <div class="flow__step">
+            <div class="flow__icon">🔗</div>
+            <div class="flow__body">
+              <p class="flow__label">Step 02</p>
+              <p class="flow__name">Webhook Trigger</p>
+              <p class="flow__detail">GitHub sends a POST payload to Jenkins at <code style="font-size:0.75rem;color:var(--accent)">jenkins.lab.local/github-webhook/</code> — Jenkins wakes up.</p>
+              <span class="flow__tag blue">POST /github-webhook/</span>
+            </div>
+          </div>
+
+          <div class="flow__step">
+            <div class="flow__icon">⚙</div>
+            <div class="flow__body">
+              <p class="flow__label">Step 03</p>
+              <p class="flow__name">Jenkins Pipeline</p>
+              <p class="flow__detail">Jenkinsfile executes: checkout → build Docker image → run tests → tag with commit SHA.</p>
+              <span class="flow__tag">Jenkinsfile</span>
+            </div>
+          </div>
+
+          <div class="flow__step">
+            <div class="flow__icon">📦</div>
+            <div class="flow__body">
+              <p class="flow__label">Step 04</p>
+              <p class="flow__name">Push to Registry</p>
+              <p class="flow__detail">Image tagged and pushed to the local Nexus registry at <code style="font-size:0.75rem;color:var(--accent)">192.168.2.128:8082</code>.</p>
+              <span class="flow__tag blue">192.168.2.128:8082</span>
+            </div>
+          </div>
+
+          <div class="flow__step">
+            <div class="flow__icon">☸</div>
+            <div class="flow__body">
+              <p class="flow__label">Step 05</p>
+              <p class="flow__name">kubectl Rollout</p>
+              <p class="flow__detail">Jenkins runs <code style="font-size:0.75rem;color:var(--accent)">kubectl set image</code> — Kubernetes performs a zero-downtime rolling update across 2 replicas.</p>
+              <span class="flow__tag green">Deployed ✓</span>
+            </div>
+          </div>
+
+          <div class="flow__step">
+            <div class="flow__icon">✦</div>
+            <div class="flow__body">
+              <p class="flow__label">Step 06</p>
+              <p class="flow__name">Live at maximuslabog.lab.local</p>
+              <p class="flow__detail">Ingress routes traffic. Health probes pass. The OG didn't lift a finger — it just happened.</p>
+              <span class="flow__tag green">Live ✓</span>
+            </div>
+          </div>
+
+        </div><!-- /flow -->
+      </div><!-- /pipeline__content -->
+    </div><!-- /pipeline__inner -->
+  </section>
 
   <!-- Bottom ticker -->
   <div class="ticker-wrap">

@@ -5,8 +5,9 @@ RUN rm -rf /usr/share/nginx/html/* \
     && rm /etc/nginx/conf.d/default.conf
 
 # Copy site assets
-COPY index.html  /usr/share/nginx/html/
-COPY hero.jpeg   /usr/share/nginx/html/
+COPY index.html    /usr/share/nginx/html/
+COPY hero.jpeg     /usr/share/nginx/html/
+COPY pipeline.jpeg /usr/share/nginx/html/
 
 # Copy nginx config
 COPY nginx.conf  /etc/nginx/conf.d/default.conf
