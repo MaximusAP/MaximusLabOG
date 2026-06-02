@@ -1,4 +1,4 @@
-FROM nginx:latest
+FROM nginx:1.29-alpine
 
 # Remove default config and assets
 RUN rm -rf /usr/share/nginx/html/* \
